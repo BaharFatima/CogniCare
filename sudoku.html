@@ -1,0 +1,482 @@
+
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sudoku | MindFlex</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#E5E7EB;
+  font-family:'Poppins',sans-serif;
+}
+
+/* APP CONTAINER */
+.app{
+  width:320px;
+  height:620px;
+  border-radius:30px;
+  background:linear-gradient(180deg,#BBDEFB 0%, #E3F2FD 100%);
+  box-shadow:0 25px 60px rgba(0,0,0,0.25);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+  padding:18px;
+  box-sizing:border-box;
+}
+
+/* Decorative transparent circles */
+.app::before{
+  content:"";
+  position:absolute;
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  top:-70px;
+  right:-60px;
+  z-index:0;
+}
+
+.app::after{
+  content:"";
+  position:absolute;
+  width:170px;
+  height:170px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.18);
+  bottom:-60px;
+  left:-50px;
+  z-index:0;
+}
+
+/* HEADER */
+header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:2;
+  font-weight:600;
+  font-size:18px;
+  color:#0D47A1;
+}
+
+/* Glass Back Button */
+.back-btn {
+      position: absolute;
+      top: 15px;
+      left: 15px;
+      font-size: 1.6rem;
+      cursor: pointer;
+      color: #003366;
+      font-weight: bold;
+      text-decoration: none;
+    }
+
+
+
+/* GLASS MAIN CARD */
+.main-card{
+  flex:1;
+  background:rgba(255,255,255,0.65);
+  backdrop-filter:blur(14px);
+  border-radius:26px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  z-index:1;
+  box-shadow:0 15px 35px rgba(0,0,0,0.15);
+}
+
+/* LEVEL SELECT */
+#levelSelect{
+  margin-bottom:12px;
+  padding:8px 10px;
+  border-radius:12px;
+  border:none;
+  background:rgba(187,222,251,0.9);
+  font-weight:600;
+  box-shadow:0 6px 14px rgba(0,0,0,0.1);
+}
+
+/* BOARD */
+#sudoku-board{
+  display:grid;
+  grid-template-columns:repeat(9, 1fr);
+  gap:2px;
+  width:100%;
+  max-width:260px;
+  margin-bottom:12px;
+}
+
+#sudoku-board input{
+  width:100%;
+  aspect-ratio:1/1;
+  text-align:center;
+  font-size:14px;
+  border-radius:8px;
+  border:1px solid #90CAF9;
+  box-sizing:border-box;
+  background:rgba(255,255,255,0.9);
+  transition:.2s;
+}
+/* sudoku grid mayube */
+#sudoku-board input:nth-child(3n){
+  border-right:3px solid #1565C0;
+}
+
+#sudoku-board input:nth-child(9n){
+  border-right:none;
+}
+
+#sudoku-board input:nth-child(n+19):nth-child(-n+27),
+#sudoku-board input:nth-child(n+46):nth-child(-n+54){
+  border-bottom:3px solid #1565C0;
+}
+
+#sudoku-board input:focus{
+  outline:none;
+  background:#E3F2FD;
+  transform:scale(1.05);
+}
+
+input.prefilled{
+  background:#BBDEFB;
+  font-weight:bold;
+}
+
+input.invalid{
+  background:#FFCDD2;
+}
+
+/* CONTROLS */
+.controls{
+  margin-top:auto;
+  display:flex;
+  gap:8px;
+}
+
+.controls button{
+  background:#1565C0;
+  color:white;
+  border:none;
+  border-radius:18px;
+  padding:8px 14px;
+  font-size:13px;
+  cursor:pointer;
+  box-shadow:0 8px 18px rgba(21,101,192,0.4);
+  transition:.2s;
+}
+
+.controls button:hover{
+  transform:scale(1.05);
+  background:#0D47A1;
+}
+/* reset button */
+#resetBtn {
+	position: absolute;
+  right: 1px;  
+  display: block;
+  margin: 6px auto 0 auto;
+  background: #E53935;
+  color: white;
+  border: none;
+  padding: 10px 24px;
+  border-radius: 18px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+ }
+#resetBtn:hover {
+  background: #B71C1C;
+}
+
+/* verify number */
+input.invalid{
+  background:#FFCDD2;
+  color:#b00020;
+  font-weight:600;
+}
+</style>
+</head>
+
+<body>
+<div class="app">
+
+<header>
+  <a href="../focuslab.html" class="back-btn">←</a>
+  Sudoku
+  <button id="resetBtn" class="reset-btn">Reset</button>
+</header>
+
+<div class="main-card">
+
+<select id="levelSelect">
+  <option value="easy">Easy</option>
+  <option value="medium">Medium</option>
+  <option value="hard">Hard</option>
+</select>
+
+<div id="sudoku-board"></div>
+
+<div class="controls">
+  <button id="hintBtn">Hint</button>
+  <button id="nextBtn" style="display:none;">Next</button>
+</div>
+
+</div>
+</div>
+
+<script type="module">
+import { saveSession } from "./saveSession.js";
+import { addXP } from "./xp.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+
+/* 🔥 PUT YOUR FIREBASE CONFIG HERE */
+// For Firebase JS SDK v7.20.0 and later, measurementId is optional
+const firebaseConfig = {
+  apiKey: "AIzaSyDdBTcf39GIKkWUnQkhx165czRtIi4PlxA",
+  authDomain: "dbtry-7bb77.firebaseapp.com",
+  projectId: "dbtry-7bb77",
+  storageBucket: "dbtry-7bb77.firebasestorage.app",
+  messagingSenderId: "1001870738801",
+  appId: "1:1001870738801:web:921f13e02e00d97e9562d0",
+  measurementId: "G-PEZCPXEH85"
+};
+
+const app = initializeApp(firebaseConfig);
+const db = getFirestore(app);
+
+/* DEVICE ID */
+function getDeviceId(){
+  let id = localStorage.getItem("mindflex_device");
+  if(!id){
+    id = crypto.randomUUID();
+    localStorage.setItem("mindflex_device", id);
+  }
+  return id;
+}
+const deviceId = getDeviceId();
+
+/* PUZZLES */
+const baseSolution = [
+[5,3,4,6,7,8,9,1,2],
+[6,7,2,1,9,5,3,4,8],
+[1,9,8,3,4,2,5,6,7],
+[8,5,9,7,6,1,4,2,3],
+[4,2,6,8,5,3,7,9,1],
+[7,1,3,9,2,4,8,5,6],
+[9,6,1,5,3,7,2,8,4],
+[2,8,7,4,1,9,6,3,5],
+[3,4,5,2,8,6,1,7,9]
+];
+
+let currentLevel="easy";
+let currentGame;
+const board=document.getElementById("sudoku-board");
+function loadGame(){
+  currentGame = generatePuzzle(currentLevel);
+  createBoard();
+  nextBtn.style.display="none";
+}
+
+function generatePuzzle(level){
+
+  // clone solution
+  let solution = JSON.parse(JSON.stringify(baseSolution));
+
+  // shuffle rows inside each 3-block
+  for(let block=0; block<3; block++){
+    let rows=[0,1,2].map(r=>r+block*3);
+    rows.sort(()=>Math.random()-0.5);
+
+    let temp=[...solution];
+    for(let i=0;i<3;i++){
+      solution[block*3+i]=temp[rows[i]];
+    }
+  }
+
+  // create puzzle copy
+  let puzzle = JSON.parse(JSON.stringify(solution));
+
+  let cellsToRemove;
+
+  if(level==="easy") cellsToRemove=35;
+  else if(level==="medium") cellsToRemove=45;
+  else cellsToRemove=55;
+
+  while(cellsToRemove>0){
+    let r=Math.floor(Math.random()*9);
+    let c=Math.floor(Math.random()*9);
+
+    if(puzzle[r][c]!=="" ){
+      puzzle[r][c]="";
+      cellsToRemove--;
+    }
+  }
+
+  return {
+    puzzle,
+    solution
+  };
+}
+
+function createBoard(){
+  board.innerHTML="";
+  currentGame.puzzle.forEach((row,r)=>{
+    row.forEach((cell,c)=>{
+      const input=document.createElement("input");
+      input.maxLength=1;
+      if(cell!==""){
+        input.value=cell;
+        input.disabled=true;
+        input.classList.add("prefilled");
+      }
+      input.addEventListener("input",()=>validate(input,r,c));
+      board.appendChild(input);
+    });
+  });
+}
+
+function validate(input,r,c){
+
+  const value = input.value;
+
+  if(!/^[1-9]$/.test(value)){
+    input.value="";
+    input.classList.remove("invalid");
+    return;
+  }
+
+  const correct = currentGame.solution[r][c];
+
+  if(parseInt(value) !== correct){
+    input.classList.add("invalid");
+  } else {
+    input.classList.remove("invalid");
+  }
+
+  checkCompletion();
+}
+
+function checkRow(r,val,input){
+  const inputs=document.querySelectorAll("#sudoku-board input");
+
+  for(let c=0;c<9;c++){
+    const idx=r*9+c;
+    if(inputs[idx]!==input && parseInt(inputs[idx].value)===val){
+      return false;
+    }
+  }
+  return true;
+}
+
+function checkCol(c,val,input){
+  const inputs=document.querySelectorAll("#sudoku-board input");
+
+  for(let r=0;r<9;r++){
+    const idx=r*9+c;
+    if(inputs[idx]!==input && parseInt(inputs[idx].value)===val){
+      return false;
+    }
+  }
+  return true;
+}
+
+function checkBox(r,c,val,input){
+
+  const inputs=document.querySelectorAll("#sudoku-board input");
+
+  const startRow=Math.floor(r/3)*3;
+  const startCol=Math.floor(c/3)*3;
+
+  for(let i=0;i<3;i++){
+    for(let j=0;j<3;j++){
+      const idx=(startRow+i)*9+(startCol+j);
+      if(inputs[idx]!==input && parseInt(inputs[idx].value)===val){
+        return false;
+      }
+    }
+  }
+
+  return true;
+}
+
+function checkCompletion(){
+  const inputs=document.querySelectorAll("#sudoku-board input");
+  for(let i=0;i<inputs.length;i++){
+    if(inputs[i].value===""||inputs[i].classList.contains("invalid")) return;
+  }
+  document.getElementById("nextBtn").style.display="inline-block";
+  saveProgress();
+addXP(db, currentUser, 10); 
+}
+
+function giveHint(){
+
+  const inputs=[...document.querySelectorAll("#sudoku-board input")];
+
+  const emptyCells = inputs
+    .map((cell,index)=>({cell,index}))
+    .filter(x => !x.cell.disabled && x.cell.value==="");
+
+  if(emptyCells.length===0) return;
+
+  const pick = emptyCells[Math.floor(Math.random()*emptyCells.length)];
+
+  const r=Math.floor(pick.index/9);
+  const c=pick.index%9;
+
+  pick.cell.value=currentGame.solution[r][c];
+  pick.cell.disabled=true;
+  pick.cell.classList.add("prefilled");
+  pick.cell.classList.remove("invalid");
+
+  checkCompletion();
+}
+
+function resetGame(){
+
+  if(!confirm("Restart this Sudoku puzzle?")) return;
+
+  createBoard();
+  document.getElementById("nextBtn").style.display="none";
+
+}
+
+async function saveProgress(){
+  await setDoc(doc(db,"progress",deviceId),{
+    sudoku:{
+      level:currentLevel,
+      lastPlayed:new Date()
+    }
+  },{merge:true});
+}
+
+/* EVENT LISTENERS */
+document.getElementById("levelSelect").addEventListener("change",e=>{
+  currentLevel=e.target.value;
+  loadGame();
+});
+document.getElementById("hintBtn").addEventListener("click",giveHint);
+document.getElementById("resetBtn").addEventListener("click",resetGame);
+document.getElementById("nextBtn").addEventListener("click",loadGame);
+
+loadGame();
+
+</script>
+</body>
+</html>

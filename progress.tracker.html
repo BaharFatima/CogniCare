@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Progress Tracker</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+<style>
+  :root {
+    --bg: #f0f4ff;
+    --card: #ffffff;
+    --primary: #3b6fd4;
+    --primary-light: #c8d9f8;
+    --primary-pale: #e8effe;
+    --accent: #f5a623;
+    --accent-light: #fff3d6;
+    --success: #4caf87;
+    --text-dark: #1a2340;
+    --text-mid: #5a6885;
+    --text-light: #9aa5be;
+    --bar-fill: #a8c3f5;
+    --bar-peak: #3b6fd4;
+    --shadow: 0 4px 24px rgba(59,111,212,0.10);
+    --shadow-sm: 0 2px 10px rgba(59,111,212,0.08);
+    --radius: 20px;
+    --radius-sm: 12px;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: var(--bg);
+    font-family: 'DM Sans', sans-serif;
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .phone-shell {
+    width: 360px;
+    max-height: 720px;
+    background: #dde4f2;
+    border-radius: 40px;
+    padding: 12px;
+    box-shadow: 0 20px 60px rgba(30,50,120,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+  }
+
+  .screen {
+    background: var(--bg);
+    border-radius: 30px;
+    overflow: hidden;
+    height: 696px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* ── TOP BAR ── */
+  .topbar {
+    background: var(--card);
+    padding: 18px 20px 14px;
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    box-shadow: var(--shadow-sm);
+    flex-shrink: 0;
+    z-index: 10;
+  }
+  .back-btn {
+    font-size: 1.4rem;
+    cursor: pointer;
+    color: #003366;
+    font-weight: bold;
+    text-decoration: none;
+    line-height: 1;
+    flex-shrink: 0;
+  }
+  .topbar h1 {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 800;
+    color: var(--text-dark);
+    letter-spacing: -.3px;
+  }
+  .sync-btn {
+    margin-left: auto;
+    background: var(--primary-pale);
+    border: none; cursor: pointer;
+    border-radius: 10px;
+    padding: 6px 12px;
+    font-size: 12px; font-weight: 600;
+    color: var(--primary);
+    transition: background .2s;
+  }
+  .sync-btn:hover { background: var(--primary-light); }
+
+  /* ── SCROLL CONTENT ── */
+  .scroll-content {
+    flex: 1;
+    overflow-y: auto;
+    padding: 18px 16px 24px;
+    scroll-behavior: smooth;
+  }
+  .scroll-content::-webkit-scrollbar { width: 4px; }
+  .scroll-content::-webkit-scrollbar-track { background: transparent; }
+  .scroll-content::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 4px; }
+
+  /* ── SECTION CARD ── */
+  .card {
+    background: var(--card);
+    border-radius: var(--radius);
+    padding: 18px 16px;
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+
+  /* ── CHART ── */
+  .chart-header {
+    display: flex; align-items: center; justify-content: space-between;
+    margin-bottom: 14px;
+  }
+  .chart-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 800; color: var(--text-dark);
+  }
+  .legend {
+    display: flex; align-items: center; gap: 5px;
+    font-size: 11px; color: var(--text-light);
+  }
+  .legend-dot {
+    width: 7px; height: 7px; border-radius: 50%;
+    background: var(--bar-fill);
+  }
+
+  .bar-chart {
+    display: flex;
+    align-items: flex-end;
+    gap: 8px;
+    height: 110px;
+    padding: 0 4px;
+  }
+  .bar-col {
+    flex: 1;
+    display: flex; flex-direction: column; align-items: center; gap: 4px;
+  }
+  .bar-wrap {
+    width: 100%; flex: 1;
+    display: flex; align-items: flex-end;
+    position: relative;
+  }
+  .bar {
+    width: 100%;
+    border-radius: 10px 10px 6px 6px;
+    background: var(--bar-fill);
+    transition: height .6s cubic-bezier(.34,1.56,.64,1);
+    position: relative;
+    overflow: hidden;
+    min-height: 8px;
+  }
+  .bar.peak { background: var(--bar-peak); }
+  .bar::after {
+    content: '';
+    position: absolute; top: 0; left: 0; right: 0;
+    height: 40%;
+    background: linear-gradient(to bottom, rgba(255,255,255,.28), transparent);
+    border-radius: 10px 10px 0 0;
+  }
+  .bar-label {
+    font-size: 10px; font-weight: 600; color: var(--text-light);
+    letter-spacing: .2px;
+  }
+  .bar-val {
+    font-size: 9px; font-weight: 700; color: var(--primary);
+    position: absolute; top: -16px; left: 50%; transform: translateX(-50%);
+    white-space: nowrap;
+  }
+
+  /* ── MOTIVATIONAL ── */
+  .motivational {
+    display: flex; align-items: center; gap: 8px;
+    background: var(--primary-pale);
+    border-radius: var(--radius-sm);
+    padding: 11px 14px;
+    margin-bottom: 14px;
+  }
+  .motivational span {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 700; color: var(--primary);
+  }
+
+  /* ── STREAK ── */
+  .streak-row {
+    display: flex; align-items: center; gap: 10px;
+    padding: 12px 16px;
+    background: var(--card);
+    border-radius: var(--radius);
+    margin-bottom: 14px;
+    box-shadow: var(--shadow);
+  }
+  .streak-label {
+    font-size: 13px; color: var(--text-light); font-weight: 500;
+  }
+  .streak-value {
+    font-family: 'Nunito', sans-serif;
+    font-size: 18px; font-weight: 900; color: var(--text-dark);
+  }
+
+  /* ── STATS GRID ── */
+  .stats-grid {
+    display: grid; grid-template-columns: 1fr 1fr;
+    gap: 10px;
+    margin-bottom: 14px;
+  }
+  .stat-card {
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    padding: 14px;
+    box-shadow: var(--shadow-sm);
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-icon { font-size: 18px; }
+  .stat-val {
+    font-family: 'Nunito', sans-serif;
+    font-size: 20px; font-weight: 900; color: var(--text-dark);
+  }
+  .stat-key { font-size: 11px; color: var(--text-light); font-weight: 500; }
+
+  /* ── ACHIEVEMENTS ── */
+  .section-title {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800;
+    color: var(--primary);
+    letter-spacing: .5px; text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .badge-list { display: flex; flex-direction: column; gap: 8px; }
+  .badge {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--primary-pale);
+    border-radius: 24px;
+    padding: 10px 16px;
+    cursor: pointer;
+    transition: transform .15s, box-shadow .15s;
+    position: relative; overflow: hidden;
+  }
+  .badge:hover { transform: scale(1.02); box-shadow: var(--shadow-sm); }
+  .badge-icon { font-size: 17px; }
+  .badge-name {
+    font-family: 'Nunito', sans-serif;
+    font-size: 14px; font-weight: 800; color: var(--text-dark);
+  }
+  .badge-sub {
+    font-size: 10px; color: var(--text-light); font-weight: 500;
+  }
+  .badge-meta { flex: 1; }
+  .confetti-burst {
+    position: absolute; inset: 0; pointer-events: none;
+    display: flex; align-items: center; justify-content: center;
+    opacity: 0;
+  }
+  .badge.pop .confetti-burst { animation: popout .6s ease forwards; }
+  @keyframes popout {
+    0% { opacity:0; transform:scale(.5); }
+    40% { opacity:1; transform:scale(1.4); }
+    100% { opacity:0; transform:scale(2); }
+  }
+
+  /* ── RECENT ACTIVITY ── */
+  .activity-list { display: flex; flex-direction: column; gap: 8px; }
+  .activity-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 14px;
+    background: var(--card);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--shadow-sm);
+  }
+  .activity-dot {
+    width: 8px; height: 8px; border-radius: 50%;
+    background: var(--primary);
+    flex-shrink: 0;
+  }
+  .activity-name {
+    font-size: 13px; font-weight: 600; color: var(--text-dark); flex: 1;
+  }
+  .activity-time {
+    font-size: 11px; color: var(--text-light);
+  }
+  .activity-mins {
+    font-family: 'Nunito', sans-serif;
+    font-size: 13px; font-weight: 800; color: var(--primary);
+  }
+
+  /* ── HINT ── */
+  .hint {
+    font-size: 11px; color: var(--text-light);
+    text-align: center; margin-top: 8px;
+    font-style: italic;
+  }
+
+  /* ── LOADING ── */
+  .loading-state {
+    display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 12px; padding: 40px;
+  }
+  .spinner {
+    width: 32px; height: 32px;
+    border: 3px solid var(--primary-light);
+    border-top-color: var(--primary);
+    border-radius: 50%;
+    animation: spin .8s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .loading-state p { font-size: 13px; color: var(--text-light); }
+
+  /* ── EMPTY / ERROR ── */
+  .empty-state {
+    text-align: center; padding: 30px 20px; color: var(--text-light);
+    font-size: 13px;
+  }
+  .empty-icon { font-size: 32px; margin-bottom: 8px; }
+</style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="screen">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <a href="main.html" class="back-btn">←</a>
+      <h1>Progress</h1>
+      <button class="sync-btn" onclick="loadAll()">↻ Sync</button>
+    </div>
+
+    <!-- SCROLLABLE BODY -->
+    <div class="scroll-content" id="main-scroll">
+
+      <!-- WEEKLY CHART CARD -->
+      <div class="card">
+        <div class="chart-header">
+          <span class="chart-title">Weekly Progress</span>
+          <span class="legend"><span class="legend-dot"></span> Minutes of activity</span>
+        </div>
+        <div class="bar-chart" id="bar-chart">
+          <div class="loading-state"><div class="spinner"></div><p>Loading chart…</p></div>
+        </div>
+      </div>
+
+      <!-- MOTIVATIONAL -->
+      <div class="motivational" id="motivational-text">
+        <span>✨ Loading your insights…</span>
+      </div>
+
+      <!-- STREAK -->
+      <div class="streak-row">
+        <span class="streak-label">Streak</span>
+        <span class="streak-value" id="streak-value">—</span>
+        <span style="font-size:18px">🔥</span>
+        <span style="font-size:12px;color:var(--text-light);margin-left:4px" id="streak-unit"></span>
+      </div>
+
+      <!-- STATS GRID -->
+      <div class="stats-grid" id="stats-grid">
+        <div class="stat-card"><div class="stat-icon">⏱</div><div class="stat-val" id="stat-total-min">—</div><div class="stat-key">Total Minutes</div></div>
+        <div class="stat-card"><div class="stat-icon">📅</div><div class="stat-val" id="stat-sessions">—</div><div class="stat-key">Sessions</div></div>
+        <div class="stat-card"><div class="stat-icon">🏆</div><div class="stat-val" id="stat-best-day">—</div><div class="stat-key">Best Day (min)</div></div>
+        <div class="stat-card"><div class="stat-icon">📈</div><div class="stat-val" id="stat-avg">—</div><div class="stat-key">Daily Avg (min)</div></div>
+      </div>
+
+      <!-- ACHIEVEMENTS -->
+      <div class="card">
+        <div class="section-title">Achievements</div>
+        <div class="badge-list" id="badge-list">
+          <div class="loading-state"><div class="spinner"></div><p>Loading badges…</p></div>
+        </div>
+        <p class="hint">Tap a badge to celebrate — unlocks a tiny confetti burst.</p>
+      </div>
+
+      <!-- RECENT ACTIVITY -->
+      <div class="card">
+        <div class="section-title">Recent Activity</div>
+        <div class="activity-list" id="activity-list">
+          <div class="loading-state"><div class="spinner"></div><p>Loading activity…</p></div>
+        </div>
+      </div>
+
+    </div><!-- end scroll -->
+  </div>
+</div>
+
+<!-- ═══════════════════════════════════════════════
+     FIREBASE  ── paste your firebaseConfig below
+════════════════════════════════════════════════ -->
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.5.0/firebase-app.js";
+import {
+  getFirestore, collection, getDocs, query, orderBy, limit
+} from "https://www.gstatic.com/firebasejs/11.5.0/firebase-firestore.js";
+import {
+  getAuth, onAuthStateChanged, signInAnonymously
+} from "https://www.gstatic.com/firebasejs/11.5.0/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD9bnmF1N44Nkuk3WZQjK9z4gRE00VRmCY",
+  authDomain: "mindflex-b2a0c.firebaseapp.com",
+  projectId: "mindflex-b2a0c",
+  storageBucket: "mindflex-b2a0c.firebasestorage.app",
+  messagingSenderId: "148676867562",
+  appId: "1:148676867562:web:3365a72b6fa6b3751cee93",
+  measurementId: "G-Q2T6HD3S0E"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+const DAY_LABELS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
+
+function timeAgo(ts) {
+  if (!ts) return "";
+  const d = ts.toDate ? ts.toDate() : new Date(ts);
+  const diff = Math.floor((Date.now() - d) / 60000);
+  if (diff < 1) return "just now";
+  if (diff < 60) return `${diff}m ago`;
+  if (diff < 1440) return `${Math.floor(diff/60)}h ago`;
+  return `${Math.floor(diff/1440)}d ago`;
+}
+
+function motivationalText(avgMin, streak) {
+  if (streak >= 7)  return `🔥 ${streak}-day streak! You're unstoppable.`;
+  if (streak >= 3)  return `✨ You're improving consistently — keep it up!`;
+  if (avgMin >= 30) return `💪 Great consistency this week!`;
+  if (avgMin >= 10) return `🌱 Good start — push a little further each day.`;
+  return `🚀 Every session counts. Start your streak today!`;
+}
+
+function computeStreak(sessions) {
+  if (!sessions.length) return 0;
+  const days = new Set(sessions.map(s => {
+    const d = s.timestamp?.toDate ? s.timestamp.toDate() : new Date(s.timestamp);
+    return d.toDateString();
+  }));
+  let streak = 0, day = new Date();
+  while (true) {
+    if (days.has(day.toDateString())) {
+      streak++;
+      day.setDate(day.getDate() - 1);
+    } else break;
+  }
+  return streak;
+}
+
+window.loadAll = async function () {
+  if (!auth.currentUser) return;
+
+  const snap = await getDocs(
+    query(
+      collection(db, "users", auth.currentUser.uid, "sessions"),
+      orderBy("timestamp", "desc"),
+      limit(200)
+    )
+  );
+  const sessions = snap.docs.map(d => d.data());
+
+  await Promise.all([
+    loadChart(sessions),
+    loadAchievements(),
+    loadActivity(sessions)
+  ]);
+};
+
+async function loadChart(sessions) {
+  const chartEl = document.getElementById("bar-chart");
+  chartEl.innerHTML = "";
+
+  if (!sessions.length) {
+    chartEl.innerHTML = `<div class="empty-state">No data yet</div>`;
+    return;
+  }
+
+  const buckets = Array(7).fill(0);
+  let totalMin = 0, totalSessions = 0;
+
+  const now = new Date();
+  const weekStart = new Date(now);
+  weekStart.setDate(now.getDate() - now.getDay());
+  weekStart.setHours(0, 0, 0, 0);
+
+  sessions.forEach(s => {
+    const dur = parseInt(s.durationMinutes ?? s.duration ?? 0) || 0;
+    const d = s.timestamp?.toDate ? s.timestamp.toDate() : new Date(s.timestamp);
+    totalMin += dur;
+    totalSessions++;
+    if (d >= weekStart) buckets[d.getDay()] += dur;
+  });
+
+  const maxVal = Math.max(...buckets, 1);
+  const bestDay = Math.max(...buckets);
+
+  buckets.forEach((val, i) => {
+    const pct = Math.max(8, (val / maxVal) * 100);
+    const col = document.createElement("div");
+    col.className = "bar-col";
+    col.innerHTML = `
+      <div class="bar-wrap">
+        <div class="bar${val === bestDay && val > 0 ? " peak" : ""}" style="height:${pct}%">
+          ${val > 0 ? `<span class="bar-val">${val}</span>` : ""}
+        </div>
+      </div>
+      <span class="bar-label">${DAY_LABELS[i]}</span>`;
+    chartEl.appendChild(col);
+  });
+
+  const streak = computeStreak(sessions);
+  const avgMin = totalSessions ? Math.round(totalMin / totalSessions) : 0;
+
+  document.getElementById("stat-total-min").textContent = totalMin;
+  document.getElementById("stat-sessions").textContent = totalSessions;
+  document.getElementById("stat-best-day").textContent = bestDay;
+  document.getElementById("stat-avg").textContent = avgMin;
+  document.getElementById("streak-value").textContent = streak;
+  document.getElementById("streak-unit").textContent = streak === 1 ? "day" : "days";
+  document.getElementById("motivational-text").innerHTML =
+    `<span>${motivationalText(avgMin, streak)}</span>`;
+}
+
+async function loadAchievements() {
+  const listEl = document.getElementById("badge-list");
+  listEl.innerHTML = `<div class="loading-state"><div class="spinner"></div><p>Loading badges…</p></div>`;
+  try {
+    const snap = await getDocs(
+      collection(db, "users", auth.currentUser.uid, "achievements")
+    );
+    const items = snap.docs.map(d => d.data());
+    if (!items.length) {
+      listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">🏅</div>No achievements yet.</div>`;
+      return;
+    }
+    listEl.innerHTML = "";
+    items.forEach(item => {
+      const badge = document.createElement("div");
+      badge.className = "badge";
+      badge.innerHTML = `
+        <span class="badge-icon">${item.emoji || "⭐"}</span>
+        <div class="badge-meta">
+          <div class="badge-name">${item.name || "Achievement"}</div>
+          ${item.description ? `<div class="badge-sub">${item.description}</div>` : ""}
+        </div>
+        <div class="confetti-burst">🎉</div>`;
+      badge.addEventListener("click", () => {
+        badge.classList.remove("pop");
+        void badge.offsetWidth;
+        badge.classList.add("pop");
+      });
+      listEl.appendChild(badge);
+    });
+  } catch (e) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">⚠️</div>${e.message}</div>`;
+  }
+}
+
+async function loadActivity(sessions) {
+ console.log("First session raw:", sessions[0])
+console.log("All keys:", Object.keys(sessions[0]));
+console.log("Full session:", JSON.stringify(sessions[0]));
+  const listEl = document.getElementById("activity-list");
+  const recent = sessions.slice(0, 10);
+
+  if (!recent.length) {
+    listEl.innerHTML = `<div class="empty-state"><div class="empty-icon">📋</div>No recent activity.</div>`;
+    return;
+  }
+
+  listEl.innerHTML = "";
+  recent.forEach(item => {
+    const dur = parseInt(item.durationMinutes ?? item.duration ?? 0) || 0;
+    const el = document.createElement("div");
+    el.className = "activity-item";
+    el.innerHTML = `
+      <div class="activity-dot"></div>
+      <span class="activity-name">${item.activityName || "Session"}</span>
+      <span class="activity-time">${timeAgo(item.timestamp)}</span>
+      <span class="activity-mins">${dur}m</span>`;
+    listEl.appendChild(el);
+  });
+}
+
+// ── AUTHENTICATION ──
+// Keeps the user signed in (anonymously) so auth.currentUser.uid is always
+// available for the Firestore reads above. No UI shown for this — it just
+// signs the visitor in transparently, the same way the page already expected.
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    loadAll();
+  } else {
+    signInAnonymously(auth).catch((err) => {
+      console.error("Firebase anonymous sign-in failed:", err);
+    });
+  }
+});
+</script></body>
+</html>

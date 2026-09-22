@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>MindFlex - Senior & Dementia Care (NER)</title>
+  <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800;900&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet"/>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #f0f4ff;
+      --card: #ffffff;
+      --primary: #3b6fd4;
+      --primary-light: #c8d9f8;
+      --primary-pale: #e8effe;
+      --accent: #f5a623;
+      --accent-light: #fff3d6;
+      --success: #4caf87;
+      --text-dark: #1a2340;
+      --text-mid: #5a6885;
+      --text-light: #9aa5be;
+      --shadow: 0 4px 24px rgba(59,111,212,0.10);
+      --shadow-sm: 0 2px 10px rgba(59,111,212,0.08);
+      --radius: 20px;
+      --radius-sm: 12px;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      font-family: 'DM Sans', sans-serif;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .phone-shell {
+      width: 360px;
+      max-height: 720px;
+      background: #dde4f2;
+      border-radius: 40px;
+      padding: 12px;
+      box-shadow: 0 20px 60px rgba(30,50,120,0.18), inset 0 1px 0 rgba(255,255,255,0.6);
+    }
+
+    .screen {
+      background: var(--bg);
+      border-radius: 30px;
+      overflow: hidden;
+      height: 696px;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* ── TOP BAR ── */
+    .topbar {
+      background: var(--card);
+      padding: 18px 20px 14px;
+      display: flex;
+      align-items: center;
+      gap: 14px;
+      box-shadow: var(--shadow-sm);
+      flex-shrink: 0;
+      z-index: 10;
+    }
+    .back-btn {
+      font-size: 1.4rem;
+      cursor: pointer;
+      color: #003366;
+      font-weight: bold;
+      text-decoration: none;
+      line-height: 1;
+      flex-shrink: 0;
+    }
+    .topbar h1 {
+      font-family: 'Nunito', sans-serif;
+      font-size: 19px; font-weight: 800;
+      color: var(--text-dark);
+      letter-spacing: -.3px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+    .status-badge {
+      margin-left: auto;
+      display: inline-block;
+      padding: 6px 12px;
+      border-radius: 10px;
+      font-size: 12px;
+      font-weight: 700;
+      flex-shrink: 0;
+    }
+    .online { background: #dcfce7; color: #166534; }
+    .offline { background: #fee2e2; color: #991b1b; }
+
+    /* ── SCROLL CONTENT ── */
+    .scroll-content {
+      flex: 1;
+      overflow-y: auto;
+      padding: 18px 16px 24px;
+      scroll-behavior: smooth;
+    }
+    .scroll-content::-webkit-scrollbar { width: 4px; }
+    .scroll-content::-webkit-scrollbar-track { background: transparent; }
+    .scroll-content::-webkit-scrollbar-thumb { background: var(--primary-light); border-radius: 4px; }
+
+    /* ── SECTION CARD ── */
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px 16px;
+      margin-bottom: 14px;
+      box-shadow: var(--shadow);
+    }
+
+    .section-title {
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px; font-weight: 800;
+      color: var(--primary);
+      letter-spacing: .5px; text-transform: uppercase;
+      margin-bottom: 12px;
+      display: flex;
+      align-items: center;
+      gap: 7px;
+    }
+
+    label.field-label {
+      display: block;
+      font-family: 'Nunito', sans-serif;
+      font-size: 13px;
+      font-weight: 700;
+      color: var(--text-dark);
+      margin-bottom: 8px;
+    }
+
+    select {
+      width: 100%;
+      padding: 12px 14px;
+      font-size: 15px;
+      font-family: 'DM Sans', sans-serif;
+      color: var(--text-dark);
+      border: none;
+      background: var(--primary-pale);
+      border-radius: var(--radius-sm);
+      margin-bottom: 12px;
+    }
+
+    /* ── BUTTONS ── */
+    .btn-large {
+      width: 100%;
+      padding: 16px;
+      margin: 6px 0;
+      font-size: 16px;
+      font-family: 'Nunito', sans-serif;
+      font-weight: 700;
+      border: none;
+      border-radius: var(--radius-sm);
+      background: var(--primary);
+      color: white;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 10px;
+      cursor: pointer;
+      transition: transform .15s, box-shadow .15s;
+      box-shadow: var(--shadow-sm);
+    }
+    .btn-large:hover { transform: scale(1.01); }
+    .btn-alert { background: #e5654f; }
+    .btn-voice { background: var(--success); }
+    .btn-option {
+      background: var(--primary-pale);
+      color: var(--text-dark);
+      box-shadow: none;
+    }
+
+    /* ── REMINDER LIST ── */
+    .reminder-list {
+      list-style: none;
+      display: flex;
+      flex-direction: column;
+      gap: 8px;
+      margin-bottom: 14px;
+    }
+    .reminder-item {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      padding: 10px 14px;
+      background: var(--primary-pale);
+      border-radius: var(--radius-sm);
+      font-size: 14px;
+      color: var(--text-dark);
+      font-weight: 500;
+    }
+
+    /* ── MEMORY GAME ── */
+    .game-prompt {
+      font-size: 14px;
+      color: var(--text-mid);
+      margin-bottom: 10px;
+    }
+    .game-emoji {
+      text-align: center;
+      font-size: 46px;
+      margin: 6px 0 14px;
+    }
+    .score-row {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      background: var(--accent-light);
+      border-radius: var(--radius-sm);
+      padding: 11px 14px;
+      margin-top: 10px;
+      font-size: 13px;
+      color: var(--text-mid);
+      font-weight: 500;
+    }
+    .score-row strong {
+      font-family: 'Nunito', sans-serif;
+      font-size: 16px;
+      font-weight: 900;
+      color: var(--accent);
+    }
+  </style>
+</head>
+<body>
+
+<div class="phone-shell">
+  <div class="screen">
+
+    <!-- TOP BAR -->
+    <div class="topbar">
+      <a href="main.html" class="back-btn">←</a>
+      <h1><i class="fas fa-hand-holding-heart"></i> Senior Care Hub</h1>
+      <span id="network-status" class="status-badge online">Online</span>
+    </div>
+
+    <!-- SCROLLABLE BODY -->
+    <div class="scroll-content">
+
+      <!-- Regional Language Selection -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-language"></i> Preferred Language</div>
+        <label class="field-label" for="lang-select">Choose a language</label>
+        <select id="lang-select" onchange="updateLanguage()">
+          <option value="as-IN">Assamese (অসমীয়া)</option>
+          <option value="bn-IN">Bengali (বাংলা)</option>
+          <option value="en-IN" selected>English (NER Accent)</option>
+          <option value="hi-IN">Hindi (हिंदी)</option>
+        </select>
+        <button class="btn-large btn-voice" onclick="speakGreeting()">
+          <i class="fas fa-volume-up"></i> Voice Guidance
+        </button>
+      </div>
+
+      <!-- Daily Care & Reminders -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-bell"></i> Daily Routine & Care Reminders</div>
+        <ul class="reminder-list" id="reminder-list">
+          <li class="reminder-item">💊 Morning Medicine — 8:00 AM</li>
+          <li class="reminder-item">💧 Hydration Break — 11:00 AM</li>
+          <li class="reminder-item">🩺 Clinic Appointment — 4:00 PM</li>
+        </ul>
+        <button class="btn-large btn-alert" onclick="triggerCaregiverAlert()">
+          <i class="fas fa-user-nurse"></i> Notify Caregiver
+        </button>
+      </div>
+
+      <!-- Adaptive Memory & Recognition Module -->
+      <div class="card">
+        <div class="section-title"><i class="fas fa-brain"></i> Memory & Recall Activity</div>
+        <p class="game-prompt" id="game-prompt">Identify the traditional NER item shown below:</p>
+        <div class="game-emoji">🍵</div>
+        <div id="game-options">
+          <button class="btn-large btn-option" onclick="checkAnswer(true)">Assam Tea (চা)</button>
+          <button class="btn-large btn-option" onclick="checkAnswer(false)">Coffee</button>
+        </div>
+        <div class="score-row" id="score-display">Current Cognitive Score: <strong id="score">100</strong></div>
+      </div>
+
+    </div><!-- end scroll -->
+  </div>
+</div>
+
+<script type="module">
+  import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
+  import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+
+  // Existing Firebase config
+  const firebaseConfig = {
+    apiKey: "AIzaSyD9bnmF1N44Nkuk3WZQjK9z4gRE00VRmCY",
+    authDomain: "mindflex-b2a0c.firebaseapp.com",
+    projectId: "mindflex-b2a0c",
+    storageBucket: "mindflex-b2a0c.firebasestorage.app",
+    messagingSenderId: "148676867562",
+    appId: "1:148676867562:web:3365a72b6fa6b3751cee93"
+  };
+
+  const app = initializeApp(firebaseConfig);
+  const db = getFirestore(app);
+
+  let score = 100;
+
+  // Language & Voice Assistant
+  window.speakGreeting = function() {
+    const lang = document.getElementById("lang-select").value;
+    const utterance = new SpeechSynthesisUtterance();
+    
+    if (lang === "as-IN" || lang === "bn-IN") {
+      utterance.text = "নমস্কাৰ, আপুনি কেনেকৈ আছে? আহক আজিৰ স্মৃতি খেল খেলোঁ।";
+    } else {
+      utterance.text = "Welcome back. Let us start your daily memory and cognitive exercise.";
+    }
+    utterance.lang = lang;
+    window.speechSynthesis.speak(utterance);
+  };
+
+  // Adaptive Game Logic
+  window.checkAnswer = function(isCorrect) {
+    if (isCorrect) {
+      score += 10;
+      alert("Correct! Good job.");
+    } else {
+      score = Math.max(0, score - 5);
+      alert("Let's try again.");
+    }
+    document.getElementById("score").textContent = score;
+    syncProgress();
+  };
+
+  // Caregiver Alerting System
+  window.triggerCaregiverAlert = async function() {
+    const alertData = {
+      timestamp: new Date().toISOString(),
+      type: "Manual Caregiver Ping",
+      status: "Attention Requested"
+    };
+    
+    // Save to Firestore and local storage for offline support
+    localStorage.setItem("last_caregiver_alert", JSON.stringify(alertData));
+    
+    try {
+      await setDoc(doc(db, "caregiver_alerts", "patient_status"), alertData);
+      alert("Caregiver dashboard updated and alert sent.");
+    } catch (e) {
+      alert("Alert saved offline. Will sync when network reconnects.");
+    }
+  };
+
+  async function syncProgress() {
+    const progressData = { score: score, lastUpdated: new Date().toISOString() };
+    localStorage.setItem("dementia_care_score", JSON.stringify(progressData));
+    if (navigator.onLine) {
+      try {
+        await setDoc(doc(db, "elderly_progress", "user_1"), progressData);
+      } catch (e) { console.log("Offline - synced locally."); }
+    }
+  }
+
+  // Network Offline Status Detector
+  window.addEventListener('online',  updateOnlineStatus);
+  window.addEventListener('offline', updateOnlineStatus);
+
+  function updateOnlineStatus() {
+    const statusEl = document.getElementById("network-status");
+    if (navigator.onLine) {
+      statusEl.textContent = "Online";
+      statusEl.className = "status-badge online";
+    } else {
+      statusEl.textContent = "Offline Mode";
+      statusEl.className = "status-badge offline";
+    }
+  }
+</script>
+</body>
+</html>

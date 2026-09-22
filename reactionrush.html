@@ -1,0 +1,357 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Reaction Rush | MindFlex</title>
+
+<style>
+body{
+  margin:0;
+  height:100vh;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  background:#E5E7EB;
+  font-family:'Poppins',sans-serif;
+}
+
+.app{
+  width:320px;
+  height:620px;
+  border-radius:30px;
+  background:linear-gradient(180deg,#BBDEFB 0%, #E3F2FD 100%);
+  box-shadow:0 25px 60px rgba(0,0,0,0.25);
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  position:relative;
+  padding:18px;
+  box-sizing:border-box;
+}
+
+.app::before{
+  content:"";
+  position:absolute;
+  width:200px;
+  height:200px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.25);
+  top:-70px;
+  right:-60px;
+  z-index:0;
+}
+
+.app::after{
+  content:"";
+  position:absolute;
+  width:170px;
+  height:170px;
+  border-radius:50%;
+  background:rgba(255,255,255,0.18);
+  bottom:-60px;
+  left:-50px;
+  z-index:0;
+}
+
+header{
+  height:60px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  position:relative;
+  z-index:2;
+}
+
+.page-title{
+  font-size:20px;
+  font-weight:600;
+  color:#0D47A1;
+}
+
+.back-btn {
+  position: absolute;
+  top: 15px;
+  left: 15px;
+  font-size: 1.6rem;
+  cursor: pointer;
+  color: #003366;
+  font-weight: bold;
+  text-decoration: none;
+}
+
+.back-btn:hover{
+  transform:scale(1.05);
+  background:rgba(255,255,255,0.9);
+}
+
+.game-card{
+  flex:1;
+  background:rgba(255,255,255,0.65);
+  backdrop-filter:blur(14px);
+  border-radius:26px;
+  padding:16px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  position:relative;
+  z-index:1;
+  box-shadow:0 15px 35px rgba(0,0,0,0.15);
+}
+
+#gameArea{
+  flex:1;
+  width:100%;
+  border-radius:20px;
+  background:rgba(187,222,251,0.4);
+  position:relative;
+  overflow:hidden;
+  margin:10px 0;
+}
+
+.circle{
+  position:absolute;
+  border-radius:50%;
+  background:radial-gradient(circle at 30% 30%, #42A5F5, #1565C0);
+  box-shadow:0 8px 20px rgba(21,101,192,0.4);
+  cursor:pointer;
+  animation:floatMove 1.5s ease-in-out infinite alternate;
+}
+
+@keyframes floatMove{
+  from{ transform:translateY(-3px); }
+  to{ transform:translateY(3px); }
+}
+
+.stats{
+  font-size:14px;
+  color:#0D47A1;
+  margin-top:5px;
+}
+
+.next-btn{
+  background:#1565C0;
+  color:white;
+  border:none;
+  border-radius:14px;
+  padding:10px 20px;
+  margin-top:8px;
+  display:none;
+  cursor:pointer;
+}
+
+.reset-btn{
+  position:absolute;
+  right:15px;
+  top:15px;
+  background:#ff5252;
+  color:white;
+  border:none;
+  padding:6px 12px;
+  border-radius:14px;
+  font-size:12px;
+  font-weight:600;
+  cursor:pointer;
+  box-shadow:0 6px 14px rgba(0,0,0,0.2);
+}
+</style>
+</head>
+
+<body>
+
+<div class="app">
+
+<header>
+  <a href="focuslab.html" class="back-btn">←</a>
+  <button id="resetBtn" class="reset-btn">Reset</button>
+  <div class="page-title">Reaction Rush</div>
+</header>
+
+<div class="game-card">
+  <div class="stats" id="levelText"></div>
+  <div id="gameArea"></div>
+  <div class="stats" id="scoreText"></div>
+  <button class="next-btn" id="nextBtn">Next Level</button>
+</div>
+
+</div>
+
+<script type="module" src="attention.js"></script>
+<script type="module">
+import { saveSession } from "./saveSession.js";
+import { addXP } from "./xp.js";
+import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
+import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-auth.js";
+
+const firebaseConfig = {
+  apiKey: "AIzaSyD9bnmF1N44Nkuk3WZQjK9z4gRE00VRmCY",
+  authDomain: "mindflex-b2a0c.firebaseapp.com",
+  projectId: "mindflex-b2a0c",
+  storageBucket: "mindflex-b2a0c.firebasestorage.app",
+  messagingSenderId: "148676867562",
+  appId: "1:148676867562:web:3365a72b6fa6b3751cee93",
+  measurementId: "G-Q2T6HD3S0E"
+};
+
+const app  = initializeApp(firebaseConfig);
+const db   = getFirestore(app);
+const auth = getAuth(app);
+
+let currentUser = null;
+
+/* GAME STATE */
+let level   = 1;
+let score   = 0;
+const maxLevel = 150;
+
+const gameArea  = document.getElementById("gameArea");
+const scoreText = document.getElementById("scoreText");
+const levelText = document.getElementById("levelText");
+const nextBtn   = document.getElementById("nextBtn");
+const resetBtn  = document.getElementById("resetBtn");
+
+// ── AUTH ─────────────────────────────────────────────────────
+// Wait for DOM to fully render before starting so gameArea has real dimensions
+onAuthStateChanged(auth, (user) => {
+  if (user) {
+    currentUser = user;
+    requestAnimationFrame(() => loadProgress());
+  } else {
+    requestAnimationFrame(() => startGame());
+  }
+});
+
+// ── SAVE PROGRESS ─────────────────────────────────────────────
+// Saves to: users/{uid}/games/reactionRush
+// Stores: current level, current score, highestLevel, lastPlayed
+async function saveProgress() {
+  if (!currentUser) return;
+  try {
+    await setDoc(
+      doc(db, "users", currentUser.uid, "games", "reactionRush"),
+      {
+        level,
+        score,
+        highestLevel: level,  // tracks personal best level reached
+        lastPlayed: new Date()
+      },
+      { merge: true }  // merge:true so highestLevel is only updated if higher
+    );
+  } catch(e) {
+    console.error("Save failed:", e);
+  }
+}
+
+// ── LOAD PROGRESS ─────────────────────────────────────────────
+// Reads from: users/{uid}/games/reactionRush
+// Restores level and score so player continues where they left off
+async function loadProgress() {
+  if (!currentUser) {
+    startGame();
+    return;
+  }
+  try {
+    const snap = await getDoc(
+      doc(db, "users", currentUser.uid, "games", "reactionRush")
+    );
+    if (snap.exists()) {
+      const data = snap.data();
+      level = data.level || 1;
+      score = data.score || 0;
+      // If they had finished a level (score=10), start next level fresh
+      if (score >= 10) {
+        score = 0;
+      }
+    }
+  } catch(e) {
+    console.error("Load failed:", e);
+    // On error just start from level 1
+    level = 1;
+    score = 0;
+  }
+  startGame();
+}
+
+// ── RESET ─────────────────────────────────────────────────────
+async function resetGame() {
+  level = 1;
+  score = 0;
+  nextBtn.style.display = "none";
+  await saveProgress();
+  startGame();
+}
+
+// ── SPAWN CIRCLE ──────────────────────────────────────────────
+function spawnCircle() {
+  gameArea.innerHTML = "";
+  const circle = document.createElement("div");
+  circle.classList.add("circle");
+
+  const size = Math.max(40 - level * 0.15, 25);
+  circle.style.width  = size + "px";
+  circle.style.height = size + "px";
+
+  // Use fallback dimensions (288 = 320px app - 32px padding) if not rendered yet
+  const areaW = gameArea.clientWidth  || 288;
+  const areaH = gameArea.clientHeight || 340;
+  const maxX  = areaW - size;
+  const maxY  = areaH - size;
+
+  circle.style.left = Math.random() * maxX + "px";
+  circle.style.top  = Math.random() * maxY + "px";
+
+  circle.onclick = () => {
+    if (score >= 10) return;
+
+    score++;
+    updateUI();
+
+    if (score === 10) {
+      nextBtn.style.display = "block";
+      gameArea.innerHTML    = "";
+      saveProgress(); // save when level is completed
+      return;
+    }
+
+    spawnCircle();
+  };
+
+  gameArea.appendChild(circle);
+}
+
+function updateUI() {
+  levelText.textContent = "Level " + level + " / " + maxLevel;
+  scoreText.textContent = "Score: " + score;
+}
+
+function startGame() {
+  updateUI();
+  spawnCircle();
+}
+
+// ── NEXT LEVEL ────────────────────────────────────────────────
+nextBtn.onclick = async () => {
+  level++;
+  addXP(db, currentUser, 10);
+
+  if (level > maxLevel) {
+    alert("Completed all 150 levels!");
+    level = 1;
+  }
+
+  score = 0;
+  nextBtn.style.display = "none";
+  await saveProgress(); // save new level before spawning
+  startGame();
+};
+
+// ── RESET BUTTON ──────────────────────────────────────────────
+resetBtn.onclick = () => {
+  if (confirm("Restart game from Level 1?")) {
+    resetGame();
+  }
+};</script>
+
+</body>
+</html>
